@@ -39,14 +39,25 @@ export default function App() {
 
   return (
     <div className="app">
-      <h1>My Chat</h1>
+      <header className="app-header">
+        <img src="/nexagpt-logo.jpg" alt="NexaGPT logo" className="logo" />
+        <h1>NexaGPT</h1>
+      </header>
 
       <div className="messages">
+        {messages.length === 0 && !loading && (
+          <div className="empty">
+            <img src="/nexagpt-logo.jpg" alt="" className="empty-logo" />
+            <p>How can I help you today?</p>
+          </div>
+        )}
+
         {messages.map((m, i) => (
           <div key={i} className={`bubble ${m.role}`}>
             {m.text}
           </div>
         ))}
+
         {loading && <div className="spinner" />}
       </div>
 

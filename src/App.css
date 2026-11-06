@@ -7,6 +7,27 @@
   padding: 16px;
   box-sizing: border-box;
 }
+
+/* Header with logo */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+.app-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+/* Messages */
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -31,6 +52,21 @@
   background: #e5e7eb;
   color: #111;
 }
+
+/* Empty state */
+.empty {
+  margin: auto;
+  text-align: center;
+  color: #777;
+}
+.empty-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+/* Input */
 .input-row {
   display: flex;
   gap: 8px;
@@ -53,6 +89,8 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Spinner */
 .spinner {
   align-self: flex-start;
   width: 24px;
