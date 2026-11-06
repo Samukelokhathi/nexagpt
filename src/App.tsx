@@ -1,28 +1,49 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
-type Message = { role: "user" | "ai"; text: string };
+type Message = {
+  role: "user" | "ai";
+  text: string;
+  duration?: number; 
+  tps?: number; 
+};
 type Theme = "dark" | "light";
 
-const MODEL = "llama3.2"; // change to a <1GB model later
-const USER_NAME = "Your Name"; // put your name here
-const SYSTEM_PROMPT = `You are NexaGPT, a helpful AI assistant helping ${USER_NAME}. Keep answers clear and concise.`;
+const MODEL = "gemma3:1b"; 
 const OLLAMA_URL = "http://localhost:11434/api/generate";
-
+const STORAGE_KEY = "nexagpt-messages";
+const USER_NAME = "Sam";
+const SYSTEM_PROMPT = `You are NexaGPT, a helpful AI assistant.
+The user you are talking to is named ${USER_NAME}. Their name is ${USER_NAME}.
+If they ask who they are or what their name is, answer: "You are ${USER_NAME}."
+Address them as ${USER_NAME} when it feels natural. Keep answers clear and concise.`;
 const SUGGESTIONS = [
   "Write a to-do list for my day",
   "Explain contrast in UI design",
   "Give me 5 startup name ideas",
 ];
 
+function loadMessages(): Message[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(loadMessages);
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem("theme") as Theme) || "dark"
   );
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -53,7 +74,15 @@ export default function App() {
         }),
       });
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "ai", text: data.response }]);
+
+      // Ollama durations are in nanoseconds
+      const duration = data.total_duration / 1e9;
+      const tps = data.eval_count / (data.eval_duration / 1e9);
+
+      setMessages((prev) => [
+        ...prev,
+        { role: "ai", text: data.response, duration, tps },
+      ]);
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -62,6 +91,10 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function newChat() {
+    setMessages([]); // the effect above also clears localStorage
   }
 
   return (
@@ -73,7 +106,7 @@ export default function App() {
           <span>NexaGPT</span>
         </div>
 
-        <button className="new-chat" onClick={() => setMessages([])}>
+        <button className="new-chat" onClick={newChat}>
           + New Chat
         </button>
 
@@ -106,8 +139,13 @@ export default function App() {
           ) : (
             <div className="chat">
               {messages.map((m, i) => (
-                <div key={i} className={`bubble ${m.role}`}>
-                  {m.text}
+                <div key={i} className={`bubble-wrap ${m.role}`}>
+                  <div className={`bubble ${m.role}`}>{m.text}</div>
+                  {m.role === "ai" && m.duration !== undefined && (
+                    <div className="stats">
+                      ⏱ {m.duration.toFixed(2)}s · ⚡ {m.tps?.toFixed(1)} tokens/sec
+                    </div>
+                  )}
                 </div>
               ))}
               {loading && <div className="spinner" />}
